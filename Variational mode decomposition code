@@ -1,0 +1,35 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+
+def read_image(file_path):
+    # Load the JPG image using Pillow and convert it to grayscale
+    image = Image.open(file_path).convert("L")
+    # Convert to numpy array
+    return np.array(image)
+
+def vmd_image_processing(image, num_modes):
+    # Placeholder for VMD processing
+    # Implement your VMD algorithm here
+    # This function should return the reconstructed image
+    return image  # Dummy implementation
+
+# Main function
+def main():
+    # Load image
+    file_path = r"D:\Vit Bhopal\Research\Leaf\A Database of Leaf Images Practice towards Plant Conservation with Plant Pathology\Mango (P0)\Diseased TV\0012_0013.JPG"
+  # Replace with your image file path
+    image = read_image(file_path)
+    
+    # Perform image processing using VMD
+    num_modes = 5  # Number of VMD modes
+    reconstructed_image = vmd_image_processing(image, num_modes)
+    
+    # Display the reconstructed image
+    plt.imshow(reconstructed_image, cmap='gray')
+    plt.axis('off')
+    plt.title('Reconstructed Image')
+    plt.show()
+
+if __name__ == "__main__":
+    main()

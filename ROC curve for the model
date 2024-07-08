@@ -1,0 +1,57 @@
+import os
+import numpy as np
+from skimage import io, color, transform
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import roc_curve, auc
+import matplotlib.pyplot as plt
+
+# Function to load and preprocess images
+def load_and_preprocess_images(folder_path):
+    image_features = []
+    labels = []
+    for class_label, class_folder in enumerate(folder_path):
+        for filename in os.listdir(class_folder):
+            if filename.endswith(('.jpg', '.jpeg', '.png')):
+                img_path = os.path.join(class_folder, filename)
+                img = io.imread(img_path)
+                img = transform.resize(img, (224, 224))  # Resize to a consistent size
+                # Check if the image is already grayscale
+                if len(img.shape) == 3 and img.shape[2] == 3:
+                    img = color.rgb2gray(img)  # Convert to grayscale
+                img = img.flatten()  # Flatten the image
+                image_features.append(img)
+                labels.append(class_label)
+    return np.array(image_features), np.array(labels)
+
+# Define the paths to your image folders (two classes)
+class1_folder = r"D:\Vit Bhopal\Research\Leaf\A Database of Leaf Images Practice towards Plant Conservation with Plant Pathology\Mango (P0)\diseased ewt all\scale_1"
+class2_folder = r"D:\Vit Bhopal\Research\Leaf\A Database of Leaf Images Practice towards Plant Conservation with Plant Pathology\Mango (P0)\healthy ewt all\scale_1"
+
+image_features, labels = load_and_preprocess_images([class1_folder, class2_folder])
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(image_features, labels, test_size=0.2, random_state=42)
+
+# Initialize and train a classifier (SVM used here for demonstration)
+classifier = SVC(probability=True)
+classifier.fit(X_train, y_train)
+
+# Predict probabilities for the test set
+y_scores = classifier.predict_proba(X_test)[:, 1]
+
+# Compute ROC curve and AUC
+fpr, tpr, thresholds = roc_curve(y_test, y_scores)
+roc_auc = auc(fpr, tpr)
+
+# Plot ROC curve
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.legend(loc="lower right")
+plt.show()

@@ -1,0 +1,61 @@
+import os
+import numpy as np
+from keras.preprocessing import image
+from keras.applications.vgg19 import VGG19, preprocess_input as vgg19_preprocess_input
+from keras.applications.densenet import DenseNet121, preprocess_input as densenet_preprocess_input
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+# Function to extract features using VGG19
+def extract_vgg19_features(img_path):
+    model = VGG19(weights='imagenet', include_top=False)
+    img = image.load_img(img_path, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = vgg19_preprocess_input(x)
+    features = model.predict(x)
+    return features.flatten()
+
+# Function to extract features using DenseNet121
+def extract_densenet_features(img_path):
+    model = DenseNet121(weights='imagenet', include_top=False)
+    img = image.load_img(img_path, target_size=(224, 224))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    x = densenet_preprocess_input(x)
+    features = model.predict(x)
+    return features.flatten()
+
+# Function to load images and extract features
+def load_images_and_extract_features(folder_path, feature_extractor):
+    features = []
+    labels = []
+    for filename in os.listdir(folder_path):
+        img_path = os.path.join(folder_path, filename)
+        if img_path.endswith(".jpg") or img_path.endswith(".png"):
+            features.append(feature_extractor(img_path))
+            labels.append(folder_path.split('/')[-1])  # Assuming class folder name is the label
+    return features, labels
+
+# Path to folders containing images for two classes
+class1_folder = r"D:\Vit Bhopal\Research\Leaf\A Database of Leaf Images Practice towards Plant Conservation with Plant Pathology\Mango (P0)\diseased ewt all\1,2,3"
+class2_folder = r"D:\Vit Bhopal\Research\Leaf\A Database of Leaf Images Practice towards Plant Conservation with Plant Pathology\Mango (P0)\healthy ewt all\1,2,3"
+
+# Extract features and labels for each class
+class1_features, class1_labels = load_images_and_extract_features(class1_folder, extract_vgg19_features)
+class2_features, class2_labels = load_images_and_extract_features(class2_folder, extract_vgg19_features)
+
+# Combine features and labels
+all_features = class1_features + class2_features
+all_labels = class1_labels + class2_labels
+
+# Split data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(all_features, all_labels, test_size=0.2, random_state=42)
+
+# Train Random Forest Classifier
+rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_classifier.fit(X_train, y_train)
+
+# Evaluate the classifier
+accuracy = rf_classifier.score(X_test, y_test)
+print("Accuracy:", accuracy)
